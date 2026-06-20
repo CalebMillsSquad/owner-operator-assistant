@@ -1,0 +1,18 @@
+export const DOT_INSPECTION_ITEMS = [
+  { category: "Brakes", item: "Brake adjustment" },
+  { category: "Brakes", item: "Brake drums/rotors" },
+  { category: "Lights", item: "Headlights" },
+  { category: "Lights", item: "Tail lights" },
+  { category: "Lights", item: "Turn signals" },
+  { category: "Tires", item: "Tire pressure" },
+  { category: "Tires", item: "Tread depth" },
+  { category: "Tires", item: "No damage or bulges" },
+  { category: "Engine", item: "Oil level" },
+  { category: "Engine", item: "Coolant level" },
+  { category: "Engine", item: "No leaks visible" },
+  { category: "Cab", item: "Mirrors adjusted" },
+  { category: "Cab", item: "Seat belt operational" },
+  { category: "Cab", item: "Horn works" },
+  { category: "Cargo", item: "Load secured" },
+  { category: "Cargo", item: "Doors/tarps secured" },
+] as const;

@@ -1,13 +1,140 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider   = "prisma-client-js"
+  engineType = "binary"
 }
 
 datasource db {
   provider = "sqlite"
+}
+
+enum LoadStatus {
+  BOOKED
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}
+
+enum ExpenseCategory {
+  FUEL
+  OIL
+  TIRES
+  REPAIRS
+  TOLLS
+  SCALES
+  PERMITS
+  INSURANCE
+  FOOD
+  OTHER
+}
+
+enum DocumentAlertStatus {
+  CURRENT
+  EXPIRING_SOON
+  EXPIRED
+  MISSING
+}
+
+enum MaintenanceStatus {
+  UPCOMING
+  DUE_SOON
+  OVERDUE
+  COMPLETED
+}
+
+enum InspectionType {
+  PRE_TRIP
+  POST_TRIP
+}
+
+model Load {
+  id           String     @id @default(cuid())
+  loadNumber   String?
+  broker       String?
+  origin       String
+  destination  String
+  miles        Float?
+  rate         Float?
+  ratePerMile  Float?
+  status       LoadStatus @default(BOOKED)
+  pickupDate   DateTime?
+  deliveryDate DateTime?
+  commodity    String?
+  notes        String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  expenses     Expense[]
+}
+
+model Expense {
+  id          String          @id @default(cuid())
+  loadId      String?
+  load        Load?           @relation(fields: [loadId], references: [id], onDelete: SetNull)
+  category    ExpenseCategory
+  amount      Float
+  expenseDate DateTime
+  vendor      String?
+  location    String?
+  notes       String?
+  receiptPath String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model FuelLog {
+  id             String   @id @default(cuid())
+  fuelDate       DateTime
+  gallons        Float
+  pricePerGallon Float
+  totalCost      Float
+  location       String?
+  odometer       Float?
+  state          String?
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model DocumentAlert {
+  id          String              @id @default(cuid())
+  title       String
+  expiresDate DateTime?
+  status      DocumentAlertStatus @default(CURRENT)
+  notes       String?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+}
+
+model MaintenanceItem {
+  id                 String            @id @default(cuid())
+  title              String
+  dueMileage         Float?
+  dueDate            DateTime?
+  lastServiceDate    DateTime?
+  lastServiceMileage Float?
+  currentMileage     Float?
+  status             MaintenanceStatus @default(UPCOMING)
+  notes              String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+}
+
+model InspectionChecklist {
+  id             String           @id @default(cuid())
+  inspectionDate DateTime         @default(now())
+  type           InspectionType
+  odometer       Float?
+  overallPassed  Boolean          @default(true)
+  notes          String?
+  items          InspectionItem[]
+  createdAt      DateTime         @default(now())
+}
+
+model InspectionItem {
+  id          String              @id @default(cuid())
+  checklistId String
+  checklist   InspectionChecklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  category    String
+  item        String
+  passed      Boolean             @default(true)
+  notes       String?
 }
