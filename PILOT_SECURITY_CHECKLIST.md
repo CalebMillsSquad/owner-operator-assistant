@@ -28,9 +28,9 @@
 
 ## Deployment and Teardown
 
-- [ ] Create a separate Vercel project for the pilot; do not alias the production domain.
+- [x] Separate Vercel project `mills-trucking-owner-operator-pilot` created; no production/custom domain attached.
 - [ ] Configure Preview-only environment variables and a separate PostgreSQL database.
-- [ ] Keep Vercel preview deployment protection enabled; app-level invited-user auth remains required.
+- [x] Vercel reports SSO deployment protection for all non-custom-domain deployments; app-level invited-user auth remains required.
 - [ ] Apply `prisma/pilot/migrations` and run `npm run pilot:seed` only against the pilot database.
 - [ ] Verify preview logs contain no credentials or record contents.
 - [ ] At pilot end: revoke tester credentials, remove the Preview deployment, delete the pilot database, and remove any isolated object store if later enabled.
@@ -41,3 +41,7 @@
 `PILOT_MODE=true`, `PILOT_WORKSPACE_ID=mills-trucking-pilot`, `DATABASE_URL`, `OWNER_OPERATOR_SESSION_SECRET`, `PILOT_TESTER_EMAIL`, `PILOT_TESTER_PASSWORD`, `PILOT_TESTER_NAME`, `PILOT_OWNER_EMAIL`, `PILOT_OWNER_PASSWORD`, and `PILOT_OWNER_NAME`.
 
 Generate passwords and the session secret in a password manager. Set them directly in the separate Vercel Pilot project's Preview environment. Deliver the tester email and password through separate private channels. Never store or paste passwords in Git, screenshots, feedback, issue trackers, or deployment logs.
+
+## Founder Action
+
+Open `https://vercel.com/trust-ed/~/integrations/accept-terms/neon?source=cli`, review and accept the Vercel Marketplace/Neon terms for the free plan, then reply with the invited tester email and the approved Mills Trucking vision graphic. Codex can then provision the isolated database, generate and set credentials privately, deploy, and finish live acceptance.

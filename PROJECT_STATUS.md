@@ -39,7 +39,7 @@ In progress. Local implementation and automated validation are substantially com
 
 ## In Progress
 
-- Separate PostgreSQL/Vercel Preview provisioning, pilot migration/seed, and live responsive/access acceptance.
+- Neon PostgreSQL provisioning, pilot migration/seed, protected Preview deployment, and live responsive/access acceptance.
 
 ## Remaining
 
@@ -54,7 +54,7 @@ In progress. Local implementation and automated validation are substantially com
 ## Blockers
 
 - Founder-provided Mills Trucking vision graphic is not present in the repository or current goal attachment.
-- Separate pilot PostgreSQL and Vercel Preview environment values are not yet provisioned.
+- Vercel requires Founder acceptance of Neon Marketplace terms before the selected `free_v3` pilot database can be created.
 
 ## Verification Status
 
@@ -64,6 +64,8 @@ In progress. Local implementation and automated validation are substantially com
 - Local production build: passed on Next.js 16.2.12 (`npm run build`).
 - Pilot PostgreSQL production build: passed with placeholder build-only environment values (`npm run pilot:build`); no live database connection was used.
 - Runtime private-route smoke: anonymous Freight Intelligence returned 307 to sign-in; signed tester routes returned 200 with the pilot banner; tester could not see reset/feedback administration while owner could.
+- Vercel: separate `trust-ed/mills-trucking-owner-operator-pilot` project created; Preview-only `PILOT_MODE` and `PILOT_WORKSPACE_ID` configured; SSO protection reports `all_except_custom_domains`; no custom or production domain attached.
+- Browser automation: blocked because the required in-app browser JavaScript control tool was unavailable in this runtime; HTTP/runtime checks passed, but visual and keyboard acceptance remain unverified.
 - Production build: passed (`npm run build`).
 - Local smoke checks: passed for `/fuel`, `/fuel/[id]/edit`, `/expenses`, `/profitability`, `/summary`, and `/audit-log`.
 - Freight Intelligence smoke checks: passed for `/freight-intelligence`, `/freight-intelligence/opportunities`, `/freight-intelligence/opportunities/new`, `/freight-intelligence/equipment`, and `/freight-intelligence/negotiations`.

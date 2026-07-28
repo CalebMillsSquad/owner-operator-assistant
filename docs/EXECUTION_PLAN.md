@@ -28,3 +28,7 @@ Mills Trucking External-Testing Pilot
 - No paid provider or add-on is enabled without Founder approval.
 - Screenshot, receipt, and document uploads remain disabled until isolated storage is configured.
 - Reset is owner-only, workspace-scoped, transactional, and preserves feedback.
+
+## Current External Gate
+
+Vercel project creation and Preview protection are complete. Neon `free_v3` provisioning is paused at mandatory Marketplace terms acceptance; no database resource exists yet.
