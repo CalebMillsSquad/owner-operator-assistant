@@ -1,106 +1,131 @@
+import { formatCurrency, formatRatePerMile, formatStatus } from "@/lib/formatters";
+import { calculateLoadProfit, calculateRatePerMile, calculateWeeklySummary } from "@/lib/profitability";
 import { prisma } from "@/lib/prisma";
 
-const currencyFormatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 0,
-});
-
-function formatCurrency(amount: number) {
-  return currencyFormatter.format(amount);
-}
+export const dynamic = "force-dynamic";
 
 export default async function ProfitabilityPage() {
   const [loads, expenses] = await Promise.all([
-    prisma.load.findMany({ orderBy: { createdAt: "desc" } }),
-    prisma.expense.findMany({ orderBy: { expenseDate: "desc" } }),
+    prisma.load.findMany({
+      where: { deletedAt: null },
+      include: { expenses: { where: { deletedAt: null } } },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.expense.findMany({ where: { deletedAt: null }, orderBy: { expenseDate: "desc" } }),
   ]);
 
-  const totalRevenue = loads.reduce((sum, load) => sum + (load.rate ?? 0), 0);
-  const deliveredRevenue = loads
-    .filter((load) => load.status === "DELIVERED")
-    .reduce((sum, load) => sum + (load.rate ?? 0), 0);
-  const totalMiles = loads.reduce((sum, load) => sum + (load.miles ?? 0), 0);
+  const loadSnapshots = loads.map((load) => ({ load, snapshot: calculateLoadProfit(load) }));
+  const totalRevenue = loadSnapshots.reduce((sum, item) => sum + item.snapshot.revenue, 0);
+  const totalLinkedExpenses = loadSnapshots.reduce((sum, item) => sum + item.snapshot.linkedExpenseTotal, 0);
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const avgRatePerMile = totalMiles > 0 ? totalRevenue / totalMiles : 0;
-  const profit = totalRevenue - totalExpenses;
-  const costPerLoad = loads.length > 0 ? totalExpenses / loads.length : 0;
+  const unassignedExpenses = totalExpenses - totalLinkedExpenses;
+  const totalNet = totalRevenue - totalExpenses;
+  const milesWithRates = loadSnapshots.reduce((sum, item) => sum + (item.snapshot.totalMiles ?? 0), 0);
+  const revenueWithMiles = loadSnapshots
+    .filter((item) => item.snapshot.totalMiles !== null)
+    .reduce((sum, item) => sum + item.snapshot.revenue, 0);
+  const averageRatePerMile = calculateRatePerMile(revenueWithMiles, milesWithRates);
+  const weekly = calculateWeeklySummary(loads, expenses);
 
   return (
-    <div className="mx-auto max-w-5xl p-8">
+    <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
       <header className="mb-8">
         <h1 className="text-2xl font-bold">Profitability Calculator</h1>
-        <p className="mt-1 text-sm text-slate-400">Use live operating data to monitor margins and revenue quality.</p>
+        <p className="mt-1 text-sm text-slate-400">
+          Revenue per mile equals load rate divided by miles. Net per load equals load rate minus expenses tied to that load.
+        </p>
       </header>
 
       <section className="mb-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <div className="panel p-5">
-          <p className="text-sm text-slate-400">Total Revenue</p>
+          <p className="text-sm text-slate-400">Total Load Revenue</p>
           <p className="mt-2 text-3xl font-semibold">{formatCurrency(totalRevenue)}</p>
+          <p className="mt-2 text-xs text-slate-500">{loads.length} recorded loads</p>
         </div>
         <div className="panel p-5">
-          <p className="text-sm text-slate-400">Delivered Revenue</p>
-          <p className="mt-2 text-3xl font-semibold">{formatCurrency(deliveredRevenue)}</p>
+          <p className="text-sm text-slate-400">Total Expenses</p>
+          <p className="mt-2 text-3xl font-semibold">{formatCurrency(totalExpenses)}</p>
+          <p className="mt-2 text-xs text-slate-500">{formatCurrency(unassignedExpenses)} unassigned</p>
         </div>
         <div className="panel p-5">
-          <p className="text-sm text-slate-400">Operating Profit</p>
-          <p className={`mt-2 text-3xl font-semibold ${profit >= 0 ? "text-green-400" : "text-red-400"}`}>
-            {formatCurrency(profit)}
+          <p className="text-sm text-slate-400">Estimated Net</p>
+          <p className={`mt-2 text-3xl font-semibold ${totalNet >= 0 ? "text-green-400" : "text-red-400"}`}>
+            {formatCurrency(totalNet)}
           </p>
+          <p className="mt-2 text-xs text-slate-500">All revenue minus all expenses</p>
         </div>
         <div className="panel p-5">
-          <p className="text-sm text-slate-400">Average Rate / Mile</p>
-          <p className="mt-2 text-3xl font-semibold">${avgRatePerMile.toFixed(2)}</p>
+          <p className="text-sm text-slate-400">Average Revenue / Mile</p>
+          <p className="mt-2 text-3xl font-semibold">{formatRatePerMile(averageRatePerMile)}</p>
+          <p className="mt-2 text-xs text-slate-500">{milesWithRates.toLocaleString()} miles with rates</p>
         </div>
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <section className="panel p-5">
-          <h2 className="mb-4 font-semibold">Margin Snapshot</h2>
-          <div className="space-y-3 text-sm text-slate-300">
-            <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900 p-3">
-              <span>Total Expenses</span>
-              <span>{formatCurrency(totalExpenses)}</span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900 p-3">
-              <span>Cost per Load</span>
-              <span>{formatCurrency(costPerLoad)}</span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900 p-3">
-              <span>Total Miles</span>
-              <span>{totalMiles.toLocaleString()}</span>
-            </div>
+      <section className="panel mb-6 p-5">
+        <h2 className="mb-4 font-semibold">Current Week Check</h2>
+        <div className="grid gap-3 text-sm text-[#324761] md:grid-cols-4">
+          <div>
+            <p className="text-slate-500">Revenue</p>
+            <p className="mt-1 font-semibold">{formatCurrency(weekly.loadRevenue)}</p>
           </div>
-        </section>
+          <div>
+            <p className="text-slate-500">Expenses</p>
+            <p className="mt-1 font-semibold">{formatCurrency(weekly.expenseTotal)}</p>
+          </div>
+          <div>
+            <p className="text-slate-500">Net</p>
+            <p className={`mt-1 font-semibold ${weekly.net >= 0 ? "text-green-400" : "text-red-400"}`}>{formatCurrency(weekly.net)}</p>
+          </div>
+          <div>
+            <p className="text-slate-500">Revenue / Mile</p>
+            <p className="mt-1 font-semibold">{formatRatePerMile(weekly.revenuePerTotalMile)}</p>
+          </div>
+        </div>
+      </section>
 
-        <section className="panel p-5">
-          <h2 className="mb-4 font-semibold">Revenue by Load</h2>
-          <div className="space-y-3">
-            {loads.length === 0 ? (
-              <p className="text-sm text-slate-500">No loads recorded yet.</p>
-            ) : (
-              loads.map((load) => (
-                <div key={load.id} className="rounded-lg border border-slate-800 bg-slate-900 p-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="font-medium">
-                        {load.origin} to {load.destination}
-                      </p>
-                      <p className="mt-1 text-xs text-slate-400">{load.status.replaceAll("_", " ")}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold">{formatCurrency(load.rate ?? 0)}</p>
-                      <p className="text-xs text-slate-400">
-                        {load.ratePerMile ? `$${load.ratePerMile.toFixed(2)}/mi` : "n/a"}
-                      </p>
-                    </div>
+      <section className="panel p-5">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="font-semibold">Net by Load</h2>
+          <span className="text-xs text-slate-500">rate - linked expenses</span>
+        </div>
+        <div className="space-y-3">
+          {loadSnapshots.length === 0 ? (
+            <p className="text-sm text-slate-500">No loads recorded yet. Add a load with rate and miles to start measuring profitability.</p>
+          ) : (
+            loadSnapshots.map(({ load, snapshot }) => (
+              <div key={load.id} className="surface-row">
+                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                  <div>
+                    <p className="font-medium">
+                      {load.origin} to {load.destination}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-400">
+                      {formatStatus(load.status)} - {load.broker ?? "Direct"} - {load.commodity ?? "General freight"}
+                    </p>
+                  </div>
+                  <div className="text-left md:text-right">
+                    <p className={`font-semibold ${snapshot.net >= 0 ? "text-green-400" : "text-red-400"}`}>
+                      {formatCurrency(snapshot.net)}
+                    </p>
+                    <p className="text-xs text-slate-400">estimated net</p>
                   </div>
                 </div>
-              ))
-            )}
-          </div>
-        </section>
-      </div>
+                <div className="mt-3 grid gap-2 text-xs text-slate-400 sm:grid-cols-4">
+                  <span>Rate: {load.rate === null ? "Missing" : formatCurrency(snapshot.revenue)}</span>
+                  <span>Miles: {snapshot.totalMiles?.toLocaleString() ?? "Missing"}</span>
+                  <span>RPM: {formatRatePerMile(snapshot.revenuePerTotalMile)}</span>
+                  <span>Linked expenses: {formatCurrency(snapshot.linkedExpenseTotal)}</span>
+                </div>
+                {snapshot.missingFields.length > 0 ? (
+                  <p className="mt-3 text-xs text-yellow-300">
+                    Missing {snapshot.missingFields.join(" and ")} keeps this load from being fully measurable.
+                  </p>
+                ) : null}
+              </div>
+            ))
+          )}
+        </div>
+      </section>
     </div>
   );
 }

@@ -1,0 +1,507 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "binary"
+  output     = "../../src/generated/pilot-prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum LoadStatus {
+  BOOKED
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}
+
+enum ExpenseCategory {
+  FUEL
+  OIL
+  TIRES
+  REPAIRS
+  TOLLS
+  SCALES
+  PERMITS
+  INSURANCE
+  FOOD
+  OTHER
+}
+
+enum DocumentAlertStatus {
+  CURRENT
+  EXPIRING_SOON
+  EXPIRED
+  MISSING
+}
+
+enum MaintenanceStatus {
+  UPCOMING
+  DUE_SOON
+  OVERDUE
+  COMPLETED
+}
+
+enum InspectionType {
+  PRE_TRIP
+  POST_TRIP
+}
+
+enum LoadSourceType {
+  LOAD_BOARD
+  BROKER
+  CARRIER_NETWORK
+  DIRECT_SHIPPER
+  DISPATCH_REFERRAL
+  BACKHAUL
+  OTHER
+}
+
+enum LoadOpportunityStatus {
+  NEW
+  REVIEWING
+  CONTACTED
+  NEGOTIATING
+  BOOKED
+  REJECTED
+  EXPIRED
+}
+
+enum OpportunityPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum MarketDemandLevel {
+  LOW
+  MEDIUM
+  HIGH
+  HOT
+}
+
+enum MarketSignalSource {
+  BROKER
+  LOAD_BOARD
+  CARRIER
+  SHIPPER
+  PERSONAL_OBSERVATION
+  OTHER
+}
+
+enum BrokerRelationshipStatus {
+  NEW
+  ACTIVE
+  PREFERRED
+  WATCHLIST
+  DO_NOT_USE
+}
+
+enum ShipperLeadStatus {
+  LEAD
+  CONTACTED
+  QUALIFIED
+  PROPOSAL_SENT
+  ACTIVE
+  LOST
+}
+
+enum EquipmentType {
+  CARGO_VAN
+  SPRINTER_VAN
+  BOX_TRUCK_16
+  BOX_TRUCK_20
+  BOX_TRUCK_24
+  BOX_TRUCK_26
+  DRY_VAN_48
+  DRY_VAN_53
+  FLATBED
+  PICKUP_ENCLOSED_TRAILER
+  PICKUP_FLATBED_TRAILER
+  POWER_ONLY
+  SMALL_STRAIGHT_TRUCK
+  OTHER
+}
+
+enum CompatibilityStatus {
+  COMPATIBLE
+  INCOMPATIBLE
+  REVIEW_REQUIRED
+}
+
+enum FreightOpportunityStatus {
+  NEW
+  REVIEWING
+  QUALIFIED
+  NEGOTIATING
+  ACCEPTED
+  REJECTED
+  EXPIRED
+  CONVERTED
+}
+
+enum NegotiationType {
+  BROKER_OFFER
+  DISPATCHER_COUNTER
+  BROKER_COUNTER
+  DRIVER_MINIMUM
+  TERMS_UPDATE
+  FINAL_AGREEMENT
+  NOTE
+}
+
+enum PilotFeedbackCategory {
+  BUG
+  CONFUSING
+  IDEA
+  DATA_ISSUE
+  ACCESSIBILITY
+  OTHER
+}
+
+model PilotFeedback {
+  id               String                @id @default(cuid())
+  workspaceId      String
+  submittedById    String
+  submittedByName  String
+  route            String
+  category         PilotFeedbackCategory
+  description      String
+  screenshotStatus String                @default("DISABLED_PENDING_ISOLATED_STORAGE")
+  viewportWidth    Int?
+  viewportHeight   Int?
+  userAgent        String?
+  createdAt        DateTime              @default(now())
+
+  @@index([workspaceId, createdAt])
+}
+
+model Load {
+  id                 String              @id @default(cuid())
+  workspaceId        String              @default("mills-trucking-pilot")
+  loadNumber         String?
+  broker             String?
+  origin             String
+  destination        String
+  miles              Float?
+  loadedMiles        Float?
+  deadheadMiles      Float?
+  rate               Float?
+  ratePerMile        Float?
+  status             LoadStatus          @default(BOOKED)
+  pickupDate         DateTime?
+  deliveryDate       DateTime?
+  commodity          String?
+  weightPounds       Float?
+  notes              String?
+  deletedAt          DateTime?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  expenses           Expense[]
+  fuelLogs           FuelLog[]
+  freightOpportunity FreightOpportunity?
+}
+
+model Expense {
+  id          String          @id @default(cuid())
+  workspaceId String          @default("mills-trucking-pilot")
+  loadId      String?
+  load        Load?           @relation(fields: [loadId], references: [id], onDelete: SetNull)
+  category    ExpenseCategory
+  amount      Float
+  expenseDate DateTime
+  vendor      String?
+  location    String?
+  notes       String?
+  receiptPath String?
+  deletedAt   DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  fuelLog     FuelLog?
+}
+
+model FuelLog {
+  id               String    @id @default(cuid())
+  workspaceId      String    @default("mills-trucking-pilot")
+  fuelDate         DateTime
+  gallons          Float
+  pricePerGallon   Float
+  totalCost        Float
+  vendor           String?
+  location         String?
+  odometer         Float?
+  state            String?
+  receiptReference String?
+  notes            String?
+  loadId           String?
+  load             Load?     @relation(fields: [loadId], references: [id], onDelete: SetNull)
+  expenseId        String?   @unique
+  expense          Expense?  @relation(fields: [expenseId], references: [id], onDelete: SetNull)
+  deletedAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model DocumentAlert {
+  id          String              @id @default(cuid())
+  workspaceId String              @default("mills-trucking-pilot")
+  title       String
+  expiresDate DateTime?
+  status      DocumentAlertStatus @default(CURRENT)
+  notes       String?
+  deletedAt   DateTime?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+}
+
+model MaintenanceItem {
+  id                 String            @id @default(cuid())
+  workspaceId        String            @default("mills-trucking-pilot")
+  title              String
+  dueMileage         Float?
+  dueDate            DateTime?
+  lastServiceDate    DateTime?
+  lastServiceMileage Float?
+  currentMileage     Float?
+  status             MaintenanceStatus @default(UPCOMING)
+  notes              String?
+  deletedAt          DateTime?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+}
+
+model InspectionChecklist {
+  id             String           @id @default(cuid())
+  workspaceId    String           @default("mills-trucking-pilot")
+  inspectionDate DateTime         @default(now())
+  type           InspectionType
+  odometer       Float?
+  overallPassed  Boolean          @default(true)
+  notes          String?
+  items          InspectionItem[]
+  deletedAt      DateTime?
+  createdAt      DateTime         @default(now())
+}
+
+model InspectionItem {
+  id          String              @id @default(cuid())
+  workspaceId String              @default("mills-trucking-pilot")
+  checklistId String
+  checklist   InspectionChecklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  category    String
+  item        String
+  passed      Boolean             @default(true)
+  notes       String?
+}
+
+model LoadOpportunity {
+  id            String                @id @default(cuid())
+  workspaceId   String                @default("mills-trucking-pilot")
+  sourceType    LoadSourceType
+  sourceName    String?
+  brokerName    String?
+  shipperName   String?
+  contactName   String?
+  phone         String?
+  email         String?
+  origin        String
+  destination   String
+  pickupDate    DateTime?
+  deliveryDate  DateTime?
+  equipmentType String?
+  rate          Float?
+  miles         Float?
+  ratePerMile   Float?
+  weight        Float?
+  commodity     String?
+  status        LoadOpportunityStatus @default(NEW)
+  priority      OpportunityPriority   @default(MEDIUM)
+  notes         String?
+  deletedAt     DateTime?
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+}
+
+model EquipmentProfile {
+  id                     String               @id @default(cuid())
+  workspaceId            String               @default("mills-trucking-pilot")
+  name                   String
+  equipmentType          EquipmentType
+  isActive               Boolean              @default(true)
+  vehicleYear            Int?
+  vehicleMake            String?
+  vehicleModel           String?
+  unitNumber             String?
+  cargoLengthFeet        Float?
+  cargoWidthInches       Float?
+  cargoHeightInches      Float?
+  doorWidthInches        Float?
+  doorHeightInches       Float?
+  palletCapacity         Int?
+  maximumPayloadPounds   Float?
+  vehicleGvwrPounds      Float?
+  trailerGvwrPounds      Float?
+  combinedRatingPounds   Float?
+  estimatedMpg           Float?
+  maintenancePerMile     Float?
+  insurancePerWeek       Float?
+  paymentPerWeek         Float?
+  defaultDispatchPercent Float?
+  minimumEffectiveRpm    Float?
+  minimumProjectedProfit Float?
+  notes                  String?
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
+  opportunities          FreightOpportunity[]
+}
+
+model FreightOpportunity {
+  id                     String                   @id @default(cuid())
+  workspaceId            String                   @default("mills-trucking-pilot")
+  source                 String?
+  externalReference      String?
+  capturedAt             DateTime                 @default(now())
+  originCity             String
+  originState            String
+  originZip              String?
+  destinationCity        String
+  destinationState       String
+  destinationZip         String?
+  loadedMiles            Float?
+  deadheadMiles          Float?
+  repositionMiles        Float?
+  stopCount              Int                      @default(1)
+  pickupDate             DateTime?
+  deliveryDate           DateTime?
+  pickupWindow           String?
+  deliveryWindow         String?
+  commodity              String?
+  weightPounds           Float?
+  palletCount            Int?
+  requiredLengthFeet     Float?
+  requiredEquipmentType  EquipmentType?
+  offeredRate            Float?
+  openingAsk             Float?
+  targetRate             Float?
+  walkAwayRate           Float?
+  finalNegotiatedRate    Float?
+  estimatedFuelPrice     Float?
+  estimatedTolls         Float?
+  estimatedOtherExpenses Float?
+  dispatchPercent        Float?
+  maintenancePerMile     Float?
+  brokerName             String?
+  brokerMcNumber         String?
+  brokerContactName      String?
+  brokerPhone            String?
+  brokerEmail            String?
+  brokerVerified         Boolean                  @default(false)
+  compatibilityStatus    CompatibilityStatus      @default(REVIEW_REQUIRED)
+  decisionStatus         FreightOpportunityStatus @default(NEW)
+  compatibilityReasons   String?
+  rejectionReason        String?
+  notes                  String?
+  equipmentProfileId     String?
+  equipmentProfile       EquipmentProfile?        @relation(fields: [equipmentProfileId], references: [id], onDelete: SetNull)
+  convertedLoadId        String?                  @unique
+  convertedLoad          Load?                    @relation(fields: [convertedLoadId], references: [id], onDelete: SetNull)
+  negotiations           FreightNegotiation[]
+  convertedAt            DateTime?
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime                 @updatedAt
+}
+
+model FreightNegotiation {
+  id              String             @id @default(cuid())
+  workspaceId     String             @default("mills-trucking-pilot")
+  opportunityId   String
+  opportunity     FreightOpportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  negotiationType NegotiationType
+  amount          Float?
+  message         String?
+  contactName     String?
+  occurredAt      DateTime           @default(now())
+  createdAt       DateTime           @default(now())
+}
+
+model MarketSignal {
+  id                String             @id @default(cuid())
+  workspaceId       String             @default("mills-trucking-pilot")
+  marketName        String
+  originRegion      String?
+  destinationRegion String?
+  equipmentType     String?
+  demandLevel       MarketDemandLevel  @default(MEDIUM)
+  sourceType        MarketSignalSource
+  sourceName        String?
+  notes             String?
+  deletedAt         DateTime?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+}
+
+model BrokerContact {
+  id                 String                   @id @default(cuid())
+  workspaceId        String                   @default("mills-trucking-pilot")
+  companyName        String
+  contactName        String?
+  phone              String?
+  email              String?
+  preferredLanes     String?
+  equipmentNeeds     String?
+  paymentNotes       String?
+  relationshipStatus BrokerRelationshipStatus @default(NEW)
+  notes              String?
+  deletedAt          DateTime?
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
+}
+
+model ShipperLead {
+  id             String            @id @default(cuid())
+  workspaceId    String            @default("mills-trucking-pilot")
+  companyName    String
+  industry       String?
+  contactName    String?
+  phone          String?
+  email          String?
+  location       String?
+  recurringLanes String?
+  freightType    String?
+  status         ShipperLeadStatus @default(LEAD)
+  notes          String?
+  deletedAt      DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+}
+
+model SmartFuelStop {
+  id             String    @id @default(cuid())
+  workspaceId    String    @default("mills-trucking-pilot")
+  truckStopName  String
+  location       String
+  state          String?
+  fuelPrice      Float?
+  routeName      String?
+  gallonsPlanned Float?
+  estimatedCost  Float?
+  iftaNote       String?
+  preferred      Boolean   @default(false)
+  notes          String?
+  deletedAt      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  workspaceId String  @default("mills-trucking-pilot")
+  entityType String
+  entityId   String
+  action     String
+  actor      String?
+  reason     String?
+  details    String?
+  createdAt  DateTime @default(now())
+}

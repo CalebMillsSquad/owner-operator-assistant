@@ -1,0 +1,16 @@
+ALTER TABLE "Load" ADD COLUMN "workspaceId" TEXT NOT NULL DEFAULT 'local-workspace';
+ALTER TABLE "Expense" ADD COLUMN "workspaceId" TEXT NOT NULL DEFAULT 'local-workspace';
+ALTER TABLE "FuelLog" ADD COLUMN "workspaceId" TEXT NOT NULL DEFAULT 'local-workspace';
+ALTER TABLE "DocumentAlert" ADD COLUMN "workspaceId" TEXT NOT NULL DEFAULT 'local-workspace';
+ALTER TABLE "MaintenanceItem" ADD COLUMN "workspaceId" TEXT NOT NULL DEFAULT 'local-workspace';
+ALTER TABLE "InspectionChecklist" ADD COLUMN "workspaceId" TEXT NOT NULL DEFAULT 'local-workspace';
+ALTER TABLE "InspectionItem" ADD COLUMN "workspaceId" TEXT NOT NULL DEFAULT 'local-workspace';
+ALTER TABLE "LoadOpportunity" ADD COLUMN "workspaceId" TEXT NOT NULL DEFAULT 'local-workspace';
+ALTER TABLE "EquipmentProfile" ADD COLUMN "workspaceId" TEXT NOT NULL DEFAULT 'local-workspace';
+ALTER TABLE "FreightOpportunity" ADD COLUMN "workspaceId" TEXT NOT NULL DEFAULT 'local-workspace';
+ALTER TABLE "FreightNegotiation" ADD COLUMN "workspaceId" TEXT NOT NULL DEFAULT 'local-workspace';
+ALTER TABLE "MarketSignal" ADD COLUMN "workspaceId" TEXT NOT NULL DEFAULT 'local-workspace';
+ALTER TABLE "BrokerContact" ADD COLUMN "workspaceId" TEXT NOT NULL DEFAULT 'local-workspace';
+ALTER TABLE "ShipperLead" ADD COLUMN "workspaceId" TEXT NOT NULL DEFAULT 'local-workspace';
+ALTER TABLE "SmartFuelStop" ADD COLUMN "workspaceId" TEXT NOT NULL DEFAULT 'local-workspace';
+ALTER TABLE "AuditLog" ADD COLUMN "workspaceId" TEXT NOT NULL DEFAULT 'local-workspace';
