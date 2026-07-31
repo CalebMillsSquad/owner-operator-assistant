@@ -46,7 +46,7 @@ export default async function Home() {
     maintenanceItems.filter((item) => item.status === "OVERDUE" || item.status === "DUE_SOON").length;
 
   return (
-    <div className="mx-auto max-w-6xl p-8">
+    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
       <header className="mb-8">
         <h1 className="text-3xl font-bold">Daily Driver Dashboard</h1>
         <p className="mt-2 text-sm text-slate-400">

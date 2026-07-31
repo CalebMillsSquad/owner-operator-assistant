@@ -30,7 +30,7 @@ export default async function SummaryPage() {
   }, {});
 
   return (
-    <div className="mx-auto max-w-5xl p-8">
+    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
       <header className="mb-8">
         <h1 className="text-2xl font-bold">Weekly Income and Expense Summary</h1>
         <p className="mt-1 text-sm text-slate-400">A rolling 7-day look at cash flow and cost drivers.</p>

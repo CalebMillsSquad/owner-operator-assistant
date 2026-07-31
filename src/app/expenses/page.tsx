@@ -10,7 +10,7 @@ export default async function ExpensesPage() {
   ]);
 
   return (
-    <div className="mx-auto max-w-6xl p-8">
+    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
       <header className="mb-8">
         <h1 className="text-2xl font-bold">Fuel and Expense Capture</h1>
         <p className="mt-1 text-sm text-slate-400">Log operating costs and tie them back to specific loads.</p>

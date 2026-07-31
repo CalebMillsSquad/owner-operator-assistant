@@ -9,7 +9,7 @@ export default async function InspectionsPage() {
   });
 
   return (
-    <div className="mx-auto max-w-6xl p-8">
+    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
       <header className="mb-8">
         <h1 className="text-2xl font-bold">Inspection Checklist</h1>
         <p className="mt-1 text-sm text-slate-400">Run DOT-style pre-trip and post-trip checks and save the result.</p>
