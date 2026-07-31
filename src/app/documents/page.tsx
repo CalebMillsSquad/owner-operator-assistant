@@ -19,7 +19,7 @@ export default async function DocumentsPage() {
   const alerts = await prisma.documentAlert.findMany({ orderBy: { updatedAt: "desc" } });
 
   return (
-    <div className="mx-auto max-w-6xl p-8">
+    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
       <header className="mb-8">
         <h1 className="text-2xl font-bold">Missing Document Alerts</h1>
         <p className="mt-1 text-sm text-slate-400">Track registrations, permits, insurance, and renewals.</p>

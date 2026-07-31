@@ -1,7 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
+import { requireAuthentication, signIn, signOut } from "@/lib/auth";
 import { DOT_INSPECTION_ITEMS } from "@/lib/inspections";
 import { applyCurrentMileageToOpenMaintenance, calculateMaintenanceStatus } from "@/lib/maintenance";
 import { prisma } from "@/lib/prisma";
@@ -20,6 +22,8 @@ function parseDateInput(value: string) {
 }
 
 export async function createLoadAction(formData: FormData) {
+  await requireAuthentication();
+
   const origin = formData.get("origin") as string;
   const destination = formData.get("destination") as string;
   const broker = formData.get("broker") as string;
@@ -42,6 +46,8 @@ export async function createLoadAction(formData: FormData) {
 }
 
 export async function updateLoadStatusAction(id: string, status: "BOOKED" | "IN_TRANSIT" | "DELIVERED" | "CANCELLED") {
+  await requireAuthentication();
+
   await prisma.load.update({ where: { id }, data: { status } });
 
   revalidatePath("/");
@@ -52,6 +58,8 @@ export async function updateLoadStatusAction(id: string, status: "BOOKED" | "IN_
 }
 
 export async function createExpenseAction(formData: FormData) {
+  await requireAuthentication();
+
   const category = formData.get("category") as
     | "FUEL"
     | "OIL"
@@ -85,6 +93,8 @@ export async function createExpenseAction(formData: FormData) {
 }
 
 export async function createDocumentAlertAction(formData: FormData) {
+  await requireAuthentication();
+
   const title = formData.get("title") as string;
   const expiresDateStr = formData.get("expiresDate") as string;
   const notes = formData.get("notes") as string;
@@ -110,6 +120,8 @@ export async function createDocumentAlertAction(formData: FormData) {
 }
 
 export async function createMaintenanceItemAction(formData: FormData) {
+  await requireAuthentication();
+
   const title = formData.get("title") as string;
   const dueDateStr = formData.get("dueDate") as string;
   const dueMileageStr = formData.get("dueMileage") as string;
@@ -135,6 +147,8 @@ export async function createMaintenanceItemAction(formData: FormData) {
 }
 
 export async function completeMaintenanceAction(id: string) {
+  await requireAuthentication();
+
   await prisma.maintenanceItem.update({
     where: { id },
     data: { status: "COMPLETED", lastServiceDate: new Date() },
@@ -145,6 +159,8 @@ export async function completeMaintenanceAction(id: string) {
 }
 
 export async function createInspectionAction(formData: FormData) {
+  await requireAuthentication();
+
   const type = formData.get("type") as "PRE_TRIP" | "POST_TRIP";
   const odometer = formData.get("odometer") as string;
   const notes = formData.get("notes") as string;
@@ -174,4 +190,35 @@ export async function createInspectionAction(formData: FormData) {
   revalidatePath("/inspections");
   revalidatePath("/maintenance");
   revalidatePath("/assistant");
+}
+
+function getSafeRedirectTarget(value: FormDataEntryValue | null) {
+  if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//")) {
+    return "/";
+  }
+
+  return value;
+}
+
+export async function loginAction(formData: FormData) {
+  const password = (formData.get("password") as string | null)?.trim() ?? "";
+  const nextPath = getSafeRedirectTarget(formData.get("next"));
+  const result = await signIn(password);
+
+  if (!result.ok) {
+    const destination = new URL("/login", "http://localhost");
+    destination.searchParams.set("error", result.reason === "config" ? "config" : "invalid");
+    if (nextPath !== "/") {
+      destination.searchParams.set("next", nextPath);
+    }
+
+    redirect(`${destination.pathname}${destination.search}`);
+  }
+
+  redirect(nextPath);
+}
+
+export async function logoutAction() {
+  await signOut();
+  redirect("/login");
 }

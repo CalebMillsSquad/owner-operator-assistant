@@ -7,7 +7,7 @@ export default async function LoadsPage() {
   const loads = await prisma.load.findMany({ orderBy: { createdAt: "desc" } });
 
   return (
-    <div className="mx-auto max-w-6xl p-8">
+    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
       <header className="mb-8">
         <h1 className="text-2xl font-bold">Load Tracking</h1>
         <p className="mt-1 text-sm text-slate-400">Capture active loads and keep delivery status current.</p>

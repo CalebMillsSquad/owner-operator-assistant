@@ -10,13 +10,17 @@ function formatCurrency(amount: number) {
   return currencyFormatter.format(amount);
 }
 
+function getWeekAgoTimestamp() {
+  return Date.now() - 7 * 24 * 60 * 60 * 1000;
+}
+
 export default async function SummaryPage() {
   const [loads, expenses] = await Promise.all([
     prisma.load.findMany({ orderBy: { createdAt: "desc" } }),
     prisma.expense.findMany({ orderBy: { expenseDate: "desc" } }),
   ]);
 
-  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const weekAgo = getWeekAgoTimestamp();
   const weeklyLoads = loads.filter((load) => new Date(load.createdAt).getTime() >= weekAgo);
   const weeklyExpenses = expenses.filter((expense) => new Date(expense.expenseDate).getTime() >= weekAgo);
 
@@ -30,7 +34,7 @@ export default async function SummaryPage() {
   }, {});
 
   return (
-    <div className="mx-auto max-w-5xl p-8">
+    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
       <header className="mb-8">
         <h1 className="text-2xl font-bold">Weekly Income and Expense Summary</h1>
         <p className="mt-1 text-sm text-slate-400">A rolling 7-day look at cash flow and cost drivers.</p>

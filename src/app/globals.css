@@ -17,6 +17,10 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+summary::-webkit-details-marker {
+  display: none;
+}
+
 @layer components {
   .panel {
     @apply rounded-xl border border-slate-800 bg-slate-950/80 shadow-sm;
