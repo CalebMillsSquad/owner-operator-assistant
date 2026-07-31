@@ -10,13 +10,17 @@ function formatCurrency(amount: number) {
   return currencyFormatter.format(amount);
 }
 
+function getWeekAgoTimestamp() {
+  return Date.now() - 7 * 24 * 60 * 60 * 1000;
+}
+
 export default async function SummaryPage() {
   const [loads, expenses] = await Promise.all([
     prisma.load.findMany({ orderBy: { createdAt: "desc" } }),
     prisma.expense.findMany({ orderBy: { expenseDate: "desc" } }),
   ]);
 
-  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const weekAgo = getWeekAgoTimestamp();
   const weeklyLoads = loads.filter((load) => new Date(load.createdAt).getTime() >= weekAgo);
   const weeklyExpenses = expenses.filter((expense) => new Date(expense.expenseDate).getTime() >= weekAgo);
 
