@@ -23,7 +23,7 @@ Centralizes the daily tasks that matter: load tracking, fuel logs, income summar
 
 - Next.js (App Router) + TypeScript
 - Tailwind CSS v4
-- Prisma + SQLite (local dev)
+- Prisma + SQLite-compatible Turso/libSQL
 
 ## Local Setup
 
@@ -34,13 +34,18 @@ npm run prisma:migrate -- --name init
 npm run dev
 ```
 
+For local-only development, `TURSO_DATABASE_URL` can use a file URL such as
+`file:./prisma/dev.db`; `TURSO_AUTH_TOKEN` can be empty for that file database.
+For a hosted Turso database, use its libSQL URL and auth token instead.
+
 Open: http://localhost:3000
 
 ## Deployment Access Setup
 
 Before exposing the app on the internet, copy `.env.example` to `.env.local` and set:
 
-- `DATABASE_URL` — use a persistent SQLite file path or another production database URL if you migrate away from SQLite
+- `TURSO_DATABASE_URL` — the Turso libSQL database URL
+- `TURSO_AUTH_TOKEN` — the token that authorizes access to that database
 - `APP_ACCESS_PASSWORD` — the password required to open the app from your phone
 - `SESSION_SECRET` — a long random string used to sign the login session cookie
 
@@ -48,16 +53,18 @@ This app now requires a login before any dashboard route can be viewed.
 
 ## Going Live on Your Phone
 
-For the current stack, the safest lightweight deployment is a single persistent server:
+The repository is configured for Vercel with `vercel.json`. In the existing
+Vercel project, add all four variables above to **Preview** and **Production**
+(and **Development** if using `vercel dev`), then:
 
-1. Deploy the Next.js app to a server that can run `npm run build` and `npm run start`
-2. Mount persistent storage for the SQLite database file if you keep SQLite in production
-3. Set the environment variables from `.env.example`
-4. Run Prisma migrations on the server before first launch
-5. Open the deployed HTTPS URL from your phone browser and sign in
+1. Apply committed migrations to the intended Turso database from an authorized environment.
+2. Verify the pull request's Preview deployment builds and the login/dashboard flow works.
+3. Merge only after the Preview deployment is accepted.
+4. Verify the Production deployment and sign-in flow from your phone.
 
 ## Production Notes
 
-- SQLite is fine for a single-owner deployment, but it needs persistent disk backups
-- If you later move to a managed host without persistent local disk, migrate `DATABASE_URL` to a hosted database first
+- Do not use a local SQLite file in Vercel functions; their filesystems are not persistent.
+- Do not run remote migrations automatically during the Vercel build. Apply them deliberately with database authorization.
+- Keep Turso backups and access controls appropriate for private business data.
 - Test mobile access after deployment to verify login, dashboard loading, and form submissions
