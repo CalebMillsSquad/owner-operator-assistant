@@ -1,5 +1,4 @@
-import { createClient } from "@libsql/client";
-import { PrismaLibSQL } from "@prisma/adapter-libsql";
+import { PrismaLibSql } from "@prisma/adapter-libsql";
 import { PrismaClient } from "@prisma/client";
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined };
@@ -12,8 +11,7 @@ function createPrismaClient() {
     throw new Error("TURSO_DATABASE_URL environment variable is not set");
   }
 
-  const client = createClient({ url, authToken });
-  const adapter = new PrismaLibSQL(client);
+  const adapter = new PrismaLibSql({ url, authToken });
 
   return new PrismaClient({ adapter, log: ["error"] });
 }
